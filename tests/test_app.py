@@ -211,9 +211,9 @@ def test_blank_vdj_source_search_is_rejected() -> None:
 
 def test_stream_name_uses_youtube_title() -> None:
     title = 'Basshunter - Now You\'re Gone (Official Video)'
-    assert stream_filename(title, "abcdefghijk") == f"{title}.m4a"
+    assert stream_filename(title, "abcdefghijk") == f"{title}.mp4"
     assert stream_url("http://127.0.0.1:8765", "abcdefghijk", title).endswith(
-        "/Basshunter%20-%20Now%20You%27re%20Gone%20%28Official%20Video%29.m4a"
+        "/Basshunter%20-%20Now%20You%27re%20Gone%20%28Official%20Video%29.mp4"
     )
     assert "Basshunter - Now You're Gone" in content_disposition(title, "abcdefghijk")
 
@@ -234,25 +234,19 @@ def test_project_versions_match() -> None:
     assert project["project"]["version"] == PROJECT_VERSION
 
 
-def test_vdj_source_stream_uses_dedicated_range_route(monkeypatch) -> None:
-    async def fake_resolve_video(video_id: str):
-        from backend.app.models import ResolveResponse
-
-        return ResolveResponse(
-            ok=True,
-            videoId=video_id,
-            localStreamUrl=(
-                f"http://127.0.0.1:8765/stream/youtube/{video_id}/Track.m4a"
-            ),
-        )
-
-    monkeypatch.setattr("backend.app.main.resolve_video", fake_resolve_video)
+def test_vdj_source_cached_video_supports_range(monkeypatch, tmp_path) -> None:
+    from backend.app.main import settings
+    monkeypatch.setattr(settings, "data_dir", tmp_path)
+    cache = tmp_path / "video-cache"
+    cache.mkdir()
+    (cache / "abcdefghijk.mp4").write_bytes(b"0123456789")
     with TestClient(app) as client:
         response = client.get("/api/vdj/source/stream/abcdefghijk")
-    assert response.status_code == 200
-    assert response.text == (
-        "http://127.0.0.1:8765/stream/vdj-source/abcdefghijk/Track.m4a"
-    )
+        assert response.status_code == 200
+        assert response.text.endswith("/video-prueba/abcdefghijk.mp4")
+        media = client.get("/video-prueba/abcdefghijk.mp4", headers={"Range": "bytes=0-3"})
+        assert media.status_code == 206
+        assert media.content == b"0123"
 
 
 @pytest.mark.asyncio

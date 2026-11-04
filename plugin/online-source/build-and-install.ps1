@@ -23,8 +23,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "Online Source plugin build failed with exit code $LASTEXITCODE."
 }
 
-$pluginFileName = "VDJ Companion Source.dll"
-$legacyPluginFileName = "VdjCompanionSource.dll"
+$pluginFileName = "YouTube Plugin Online.dll"
+$legacyPluginFileName = "YouTube Plugin Online LEGACY UNUSED.dll"
 $dll = Join-Path $projectDir "build\Release\$pluginFileName"
 $prebuiltDir = Join-Path $projectDir "prebuilt\x64"
 $prebuiltDll = Join-Path $prebuiltDir $pluginFileName
