@@ -1,0 +1,12 @@
+*.docx
+.env
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.sqlite*
+data/
+tools/
+.cache/
+dist/
+plugin/online-source/build/
