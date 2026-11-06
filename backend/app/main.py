@@ -108,7 +108,7 @@ async def status_page() -> HTMLResponse:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VDJ Companion status</title>
+  <title>YouTube Plugin Online</title>
   <style>
     :root {{ color-scheme: dark; font-family: system-ui, sans-serif; }}
     body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111318; color: #f4f5f7; }}
@@ -152,7 +152,7 @@ async def status_page() -> HTMLResponse:
 </head>
 <body>
   <main>
-    <img class="logo" src="/assets/logo.svg" alt="VDJ Companion">
+    <h1>YouTube Plugin Online</h1><p>Estado del servicio de música y video para VirtualDJ</p>
     <ul>{rows}</ul>
     <section id="update-panel" class="update" aria-labelledby="update-title">
       <h2 id="update-title">Updates</h2>
@@ -160,7 +160,7 @@ async def status_page() -> HTMLResponse:
         <div class="version"><span>Current version</span><strong>{health["version"]}</strong></div>
         <div class="version"><span>Latest available</span><strong id="latest-version">Checking...</strong></div>
       </div>
-      <p id="update-status">Checking GitHub releases...</p>
+      <p id="update-status">Comprobando actualizaciones...</p>
       <div class="update-actions">
         <a id="view-update" class="release-link" target="_blank" rel="noopener noreferrer">View update details on GitHub</a>
         <button id="skip-update" class="skip-update" type="button">Skip this update</button>
@@ -173,7 +173,7 @@ async def status_page() -> HTMLResponse:
     <div class="actions"><button id="shutdown" type="button">Shutdown backend</button></div>
     <div id="message" role="status"></div>
     <footer>
-      Version {health["version"]} · Uptime <span id="uptime">{health["uptimeSeconds"]}</span>s · <a href="/api/health">JSON health</a>
+      Version {health["version"]} Â· Uptime <span id="uptime">{health["uptimeSeconds"]}</span>s Â· <a href="/api/health">JSON health</a>
       <nav>
         <a class="social" href="https://github.com/rcsy-px" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .7a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.2.8-.5v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.4 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.6.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C16.9 5 18 5.3 18 5.3c.6 1.5.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.8 5.4-5.5 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .7Z"/></svg>
@@ -245,14 +245,14 @@ async def status_page() -> HTMLResponse:
           if (getSkippedUpdate() === update.latestVersion) showSkippedUpdate(update);
           else showAvailableUpdate(update);
         }} else if (update.error) {{
-          updateStatus.textContent = "Update check is temporarily unavailable.";
+          updateStatus.textContent = "Actualizaciones no disponibles. El repositorio privado requiere acceso autorizado.";
         }} else {{
-          updateStatus.textContent = "You are running the latest version.";
+          updateStatus.textContent = "No se encontraron actualizaciones.";
         }}
       }})
       .catch(() => {{
         latestVersion.textContent = "Unavailable";
-        updateStatus.textContent = "Update check is temporarily unavailable.";
+        updateStatus.textContent = "Actualizaciones no disponibles. El repositorio privado requiere acceso autorizado.";
       }});
     skipUpdate.addEventListener("click", () => {{
       if (!availableUpdate) return;
