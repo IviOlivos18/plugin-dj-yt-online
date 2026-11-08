@@ -1,33 +1,37 @@
-# YouTube Plugin Online
+<div align="center">
+  <img src="docs/assets/readme-banner.svg" alt="Plugin DJ Online: música y video para tus mezclas en VirtualDJ" width="100%">
 
-Plugin personal para VirtualDJ Pro en Windows x64. Busca videos de YouTube y prepara un MP4 con imagen y sonido para cargarlo en un deck. La primera carga descarga el video a la cachÃ© local.
+  **Busca música y video, y cárgalos directamente en VirtualDJ.**
 
-## InstalaciÃ³n
+  [![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-3178C6?style=for-the-badge)](https://www.microsoft.com/windows)
+  [![VirtualDJ Pro](https://img.shields.io/badge/VirtualDJ-Pro-7764C8?style=for-the-badge)](https://www.virtualdj.com/)
+  [![Descargar](https://img.shields.io/badge/Descargar-%C3%BAltima%20versi%C3%B3n-23A594?style=for-the-badge)](https://github.com/IviOlivos18/plugin-dj-yt-online/releases/latest)
+</div>
 
-Ejecuta el instalador de Windows y sigue las instrucciones. Requiere internet, VirtualDJ Pro y Windows 10 u 11 de 64 bits. Usa el puerto local 8766 y no modifica VDJ Companion Source. Reinicia VirtualDJ y abre Online Music > YouTube Plugin Online.
+## 🎵 ¿Qué puedes hacer?
 
-Los MP4 quedan en `data/video-cache` y todavÃ­a no se borran automÃ¡ticamente. La limpieza automÃ¡tica y el historial son trabajo pendiente. El plugin es una adaptaciÃ³n de [VDJ Companion](https://github.com/rcsy-px/vdj-stream), bajo licencia MIT; conserva LICENSE. No estÃ¡ afiliado a YouTube ni a VirtualDJ. El uso de videos estÃ¡ sujeto a las condiciones del servicio y a los derechos del contenido.
+- **Buscar música y videos** desde el navegador de VirtualDJ.
+- **Cargar una pista en un deck** con su audio y video.
+- **Reutilizar archivos descargados** para cargar más rápido una canción que ya habías usado.
+- **Consultar el estado de las actualizaciones** desde el icono del programa en el área de notificaciones de Windows.
 
-## Preparar una distribución
+## ✨ Comienza a usarlo
 
-En Windows con .NET Framework y PowerShell, ejecuta `powershell -ExecutionPolicy Bypass -File scripts/build-installer.ps1`. Se generan un instalador `.exe` y un archivo SHA-256 en `dist`. El instalador requiere conexión y debe ejecutarse con VirtualDJ cerrado.
+**Necesitas:** Windows 10 u 11 de 64 bits, VirtualDJ Pro y conexión a internet.
 
-El comprobador consulta este repositorio, no el repositorio original. GitHub no ofrece acceso anónimo a versiones de un repositorio privado: hasta que se configure un canal de actualizaciones autorizado, la aplicación puede mostrar que la consulta no está disponible. No incluye credenciales ni instala actualizaciones automáticamente.
+1. Descarga el instalador desde [la versión más reciente](https://github.com/IviOlivos18/plugin-dj-yt-online/releases/latest).
+2. Cierra VirtualDJ, abre el instalador y haz clic en **Instalar**.
+3. Cuando termine, abre VirtualDJ y busca **YouTube Plugin Online** en la sección **Online Music**.
+4. Escribe el nombre de una canción o video y carga el resultado en un deck.
 
-Antes de una distribución pública, revisar permisos para los contenidos y la fuente, las licencias de dependencias y SDK, el nombre y las reglas de la tienda. El hecho de que el código original tenga licencia MIT no concede derechos sobre contenido de YouTube.
+La primera instalación puede tardar varios minutos mientras se preparan los componentes necesarios. La primera vez que cargas un video, el programa descarga el audio y la imagen antes de abrirlo en VirtualDJ.
 
-## Publicar una actualización
+## 💾 Archivos descargados
 
-Cada versión debe usar el mismo número en `VERSION` y `pyproject.toml`. Genera el instalador con `scripts/build-installer.ps1`, crea una versión de GitHub con etiqueta `vX.Y.Z` y adjunta `Plugin-Online-X.Y.Z-windows-x64-setup.exe` junto con su archivo `.sha256`. El instalador incluye el servicio y la DLL de esa misma versión. El comprobador identifica solamente el instalador correspondiente a la etiqueta y el hash SHA-256 devuelto por GitHub. Un repositorio privado no puede consultarse sin acceso autorizado.
+Los videos utilizados se guardan en la caché del programa para que puedas volver a cargarlos. Por ahora, **no se eliminan automáticamente**, así que ocupan espacio en tu computadora.
 
-## Comprobación en segundo plano
+## 💜 Créditos y licencia
 
-Al abrir VirtualDJ, el icono de la bandeja solicita una comprobación de la última versión publicada en GitHub. No se hacen comprobaciones periódicas mientras VirtualDJ siga abierto. Si la versión es más reciente y tiene un instalador con el nombre y el SHA-256 esperados, se descarga y verifica en `data/updates`. Esta fase no ejecuta el instalador ni cambia la instalación. Requiere un repositorio y una versión públicos o un mecanismo de acceso autorizado, que no se incluye. No guarda credenciales.
+Este proyecto es una adaptación de [VDJ Companion](https://github.com/rcsy-px/vdj-stream), creado por **rcsy-px**. Conserva su aviso de copyright y su [licencia MIT](LICENSE). Consulta los [avisos de terceros](THIRD_PARTY_NOTICES.md) para conocer las demás dependencias.
 
-La huella que devuelve GitHub verifica integridad frente a los metadatos de la versión; no sustituye la firma del ejecutable ni una atestación de procedencia. El icono permite abrir la carpeta donde se ha guardado una actualización verificada. La instalación automática, la ventana de confirmación y la integración con Komi Store aún no están implementadas.
-
-## Instalador con interfaz sencilla
-
-Abre el ejecutable y pulsa Instalar. La ventana muestra un mensaje de progreso mientras prepara las dependencias y el servicio. Una vez terminado, instala el plugin para el usuario actual y arranca el icono de la bandeja. El instalador requiere internet, VirtualDJ cerrado y que no haya otro servicio usando el puerto local 8766.
-
-El aviso en la bandeja puede mostrar una actualización descargada y abrir su carpeta; la instalación automática de las actualizaciones aún no está implementada. Los detalles técnicos del instalador se guardan en `%LOCALAPPDATA%/PluginOnline-instalacion.log`.
+Plugin DJ Online es un proyecto independiente y no está afiliado a YouTube ni a VirtualDJ. El uso del contenido está sujeto a los derechos correspondientes y a las condiciones de los servicios utilizados.
