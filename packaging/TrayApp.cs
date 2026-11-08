@@ -10,7 +10,7 @@ using System.Collections.Generic;
 internal class TrayApp : ApplicationContext {
  private NotifyIcon icon;
  private Timer timer;
- private bool seen, pending, ready;
+ private bool seen, pending, ready, notified;
  private ToolStripMenuItem status, install;
  private const string Address = "http://127.0.0.1:8766";
  public TrayApp() {
@@ -28,8 +28,8 @@ internal class TrayApp : ApplicationContext {
  }
  private void Tick(object sender, EventArgs e) {
   bool open=Process.GetProcessesByName("virtualdj").Length>0;
-  if (!open) { seen=false; pending=false; }
-  if (open && !seen) { seen=true; pending=true; status.Text="Esperando servicio"; }
+  if (!open) { seen=false; pending=false; notified=false; }
+  if (open && !seen) { seen=true; pending=true; ready=false; notified=false; status.Text="Esperando servicio"; }
   try {
    if (pending) {
     using (var c=new WebClient()) { c.UploadString(Address+"/api/update/virtualdj-open", "POST", ""); }
@@ -42,8 +42,14 @@ internal class TrayApp : ApplicationContext {
      status.Text=open ? "Cierra VirtualDJ para actualizar" : "Actualización descargada"; install.Enabled=!open;
      if (!ready) { ready=true; icon.ShowBalloonTip(5000,"Nueva actualización", "Cierra VirtualDJ y usa el icono para ver la actualización descargada.", ToolTipIcon.Info); }
     } else if (value=="checking" || value=="downloading") { status.Text="Buscando actualización"; }
-    else if (value=="current") { status.Text="Sin actualizaciones"; install.Enabled=false; }
-    else if (value=="unavailable") { status.Text="No se pudo comprobar"; install.Enabled=false; }
+    else if (value=="current") {
+     status.Text="El plugin está actualizado"; install.Enabled=false;
+     if (open && !notified) { notified=true; icon.ShowBalloonTip(5000,"Plugin actualizado", "Ya tienes la versión más reciente.", ToolTipIcon.Info); }
+    }
+    else if (value=="unavailable") {
+     status.Text="No se pudo comprobar la versión"; install.Enabled=false;
+     if (open && !notified) { notified=true; icon.ShowBalloonTip(5000,"No se pudo comprobar", "No fue posible comprobar la versión en GitHub.", ToolTipIcon.Warning); }
+    }
     else if (value=="idle" && !open) { status.Text="Esperando VirtualDJ"; install.Enabled=false; }
    }
   } catch { if (!pending) status.Text="Servicio no disponible"; else status.Text="Esperando servicio"; }

@@ -71,6 +71,8 @@ class GitHubReleaseChecker:
         latest_version = str(release.get("tag_name", "")).removeprefix("v")
         current_tuple = _version_tuple(self.current_version)
         latest_tuple = _version_tuple(latest_version)
+        if current_tuple is None or latest_tuple is None:
+            raise ValueError("Invalid version format")
         assets = release.get("assets") or []
         release_prefix = f"https://github.com/{self.repository}/releases/"
         release_url = release.get("html_url")

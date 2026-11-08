@@ -79,3 +79,27 @@ def test_lifespan_does_not_check_without_virtualdj(monkeypatch):
     monkeypatch.setattr(main, "_prepare_update_once", unexpected)
     with TestClient(main.app) as client:
         assert client.get("/api/update/state").status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_check_trigger_clears_old_current_status(monkeypatch):
+    import asyncio
+    import importlib
+    main = importlib.import_module("backend.app.main")
+    gate = asyncio.Event()
+    class FakeClient:
+        host = "127.0.0.1"
+    class FakeRequest:
+        client = FakeClient()
+        headers = {}
+    async def pending_check():
+        await gate.wait()
+    monkeypatch.setattr(main, "_prepare_update_once", pending_check)
+    monkeypatch.setattr(main, "update_task", None)
+    main.update_state.update(status="current", version="0.1.2", message=None)
+    result = await main.update_virtualdj_open(FakeRequest())
+    assert result == {"accepted": True}
+    assert main.update_state["status"] == "checking"
+    assert main.update_state["version"] is None
+    gate.set()
+    await main.update_task

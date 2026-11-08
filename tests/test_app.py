@@ -428,3 +428,17 @@ async def test_update_checker_requires_valid_digest(monkeypatch):
     assert result["updateAvailable"] is True
     assert result["downloadUrl"] is None
     assert result["sha256"] is None
+
+
+@pytest.mark.asyncio
+async def test_invalid_release_version_is_not_reported_as_up_to_date(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self): pass
+        def json(self): return {"tag_name": "not-a-version", "assets": []}
+    class FakeClient:
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): pass
+        async def get(self, url): return FakeResponse()
+    monkeypatch.setattr("backend.app.update_checker.httpx.AsyncClient", lambda **kwargs: FakeClient())
+    result = await GitHubReleaseChecker("0.1.2", "owner/repo").check()
+    assert result["error"] == "Update check unavailable"

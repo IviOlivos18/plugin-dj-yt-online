@@ -336,6 +336,7 @@ async def update_virtualdj_open(request: Request) -> dict:
     if not _is_loopback(request) or request.headers.get("origin"):
         raise HTTPException(403, "Only a local application can start update checks")
     if update_task is None or update_task.done():
+        update_state.update(status="checking", version=None, message=None)
         update_task = asyncio.create_task(_prepare_update_once())
     return {"accepted": True}
 
