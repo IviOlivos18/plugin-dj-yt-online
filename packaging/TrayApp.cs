@@ -28,8 +28,8 @@ internal class TrayApp : ApplicationContext {
  }
  private void Tick(object sender, EventArgs e) {
   bool open=Process.GetProcessesByName("virtualdj").Length>0;
-  if (!open) { seen=false; pending=false; ready=false; status.Text="Esperando VirtualDJ"; install.Enabled=false; return; }
-  if (!seen) { seen=true; pending=true; status.Text="Esperando servicio"; }
+  if (!open) { seen=false; pending=false; }
+  if (open && !seen) { seen=true; pending=true; status.Text="Esperando servicio"; }
   try {
    if (pending) {
     using (var c=new WebClient()) { c.UploadString(Address+"/api/update/virtualdj-open", "POST", ""); }
@@ -39,11 +39,12 @@ internal class TrayApp : ApplicationContext {
     var data=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(c.DownloadString(Address+"/api/update/state"));
     string value=Convert.ToString(data["status"]);
     if (value=="ready") {
-     status.Text="Actualización descargada"; install.Enabled=true;
-     if (!ready) { ready=true; icon.ShowBalloonTip(5000,"Nueva actualización", "Haz clic en el icono para ver la actualización descargada.", ToolTipIcon.Info); }
+     status.Text=open ? "Cierra VirtualDJ para actualizar" : "Actualización descargada"; install.Enabled=!open;
+     if (!ready) { ready=true; icon.ShowBalloonTip(5000,"Nueva actualización", "Cierra VirtualDJ y usa el icono para ver la actualización descargada.", ToolTipIcon.Info); }
     } else if (value=="checking" || value=="downloading") { status.Text="Buscando actualización"; }
-    else if (value=="current") { status.Text="Sin actualizaciones"; }
-    else if (value=="unavailable") { status.Text="No se pudo comprobar"; }
+    else if (value=="current") { status.Text="Sin actualizaciones"; install.Enabled=false; }
+    else if (value=="unavailable") { status.Text="No se pudo comprobar"; install.Enabled=false; }
+    else if (value=="idle" && !open) { status.Text="Esperando VirtualDJ"; install.Enabled=false; }
    }
   } catch { if (!pending) status.Text="Servicio no disponible"; else status.Text="Esperando servicio"; }
  }
