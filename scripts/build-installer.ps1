@@ -19,7 +19,7 @@ try {
   Get-ChildItem -LiteralPath $stage -Recurse -Directory -Filter '__pycache__' | Remove-Item -Recurse -Force
   $zip = Join-Path ([IO.Path]::GetTempPath()) ('plugin-online-payload-' + [guid]::NewGuid().ToString('N') + '.zip')
   Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip
-  $exe = Join-Path $dist ("Instalar Plugin Online $version.exe")
+  $exe = Join-Path $dist ("Plugin-Online-$version-windows-x64-setup.exe")
   $compiler = Join-Path $env:SystemRoot 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
   if (-not (Test-Path -LiteralPath $compiler)) { throw 'No se encontro el compilador de .NET Framework.' }
   & $compiler /nologo /target:exe /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll "/resource:$zip,payload.zip" "/out:$exe" (Join-Path $root 'packaging\Installer.cs')

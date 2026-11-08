@@ -15,3 +15,7 @@ En Windows con .NET Framework y PowerShell, ejecuta `powershell -ExecutionPolicy
 El comprobador consulta este repositorio, no el repositorio original. GitHub no ofrece acceso anónimo a versiones de un repositorio privado: hasta que se configure un canal de actualizaciones autorizado, la aplicación puede mostrar que la consulta no está disponible. No incluye credenciales ni instala actualizaciones automáticamente.
 
 Antes de una distribución pública, revisar permisos para los contenidos y la fuente, las licencias de dependencias y SDK, el nombre y las reglas de la tienda. El hecho de que el código original tenga licencia MIT no concede derechos sobre contenido de YouTube.
+
+## Publicar una actualización
+
+Cada versión debe usar el mismo número en `VERSION` y `pyproject.toml`. Genera el instalador con `scripts/build-installer.ps1`, crea una versión de GitHub con etiqueta `vX.Y.Z` y adjunta `Plugin-Online-X.Y.Z-windows-x64-setup.exe` junto con su archivo `.sha256`. El instalador incluye el servicio y la DLL de esa misma versión. El comprobador identifica solamente el instalador correspondiente a la etiqueta y el hash SHA-256 devuelto por GitHub. Un repositorio privado no puede consultarse sin acceso autorizado.

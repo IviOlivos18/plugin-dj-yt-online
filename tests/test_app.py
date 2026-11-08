@@ -365,3 +365,66 @@ def test_search_falls_back_to_browser(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.json()["provider"] == "youtube_browser"
     assert response.json()["results"][0]["title"] == "Fallback result"
+
+
+@pytest.mark.asyncio
+async def test_update_checker_selects_versioned_installer_and_digest(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            name = "Plugin-Online-0.1.3-windows-x64-setup.exe"
+            return {
+                "tag_name": "v0.1.3",
+                "html_url": "https://github.com/owner/repo/releases/tag/v0.1.3",
+                "assets": [{
+                    "name": name,
+                    "browser_download_url": "https://github.com/owner/repo/releases/download/v0.1.3/" + name,
+                    "digest": "sha256:" + "a" * 64,
+                }],
+            }
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            return FakeResponse()
+
+    monkeypatch.setattr("backend.app.update_checker.httpx.AsyncClient", lambda **kwargs: FakeClient())
+    result = await GitHubReleaseChecker("0.1.2", "owner/repo").check()
+    assert result["updateAvailable"] is True
+    assert result["downloadUrl"].endswith("Plugin-Online-0.1.3-windows-x64-setup.exe")
+    assert result["sha256"] == "sha256:" + "a" * 64
+
+
+@pytest.mark.asyncio
+async def test_update_checker_requires_valid_digest(monkeypatch):
+    class FakeResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            name = "Plugin-Online-0.1.3-windows-x64-setup.exe"
+            return {"tag_name": "v0.1.3", "html_url": "https://github.com/owner/repo/releases/tag/v0.1.3",
+                    "assets": [{"name": name, "browser_download_url": "https://github.com/owner/repo/releases/download/v0.1.3/" + name, "digest": "invalid"}]}
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            return FakeResponse()
+
+    monkeypatch.setattr("backend.app.update_checker.httpx.AsyncClient", lambda **kwargs: FakeClient())
+    result = await GitHubReleaseChecker("0.1.2", "owner/repo").check()
+    assert result["updateAvailable"] is True
+    assert result["downloadUrl"] is None
+    assert result["sha256"] is None

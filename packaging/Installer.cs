@@ -11,13 +11,15 @@ class Installer {
    using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.zip"))
    using (ZipArchive z = new ZipArchive(s, ZipArchiveMode.Read)) {
     if (args.Length > 0 && args[0] == "--verify-only") {
-     bool hasScript = false, hasPlugin = false;
+     bool hasScript = false, hasPlugin = false, hasService = false, hasVersion = false;
      foreach (ZipArchiveEntry entry in z.Entries) {
       string name = entry.FullName.Replace('\\', '/');
       if (name == "INSTALAR.ps1") hasScript = true;
+      if (name == "VERSION") hasVersion = true;
+      if (name == "backend/app/main.py") hasService = true;
       if (name == "plugin/online-source/prebuilt/x64/YouTube Plugin Online.dll") hasPlugin = true;
      }
-     if (!hasScript || !hasPlugin) return 2;
+     if (!hasScript || !hasPlugin || !hasService || !hasVersion) return 2;
      Console.WriteLine("Installer package OK; entries: " + z.Entries.Count); return 0;
     }
     z.ExtractToDirectory(work);

@@ -76,17 +76,20 @@ class GitHubReleaseChecker:
         release_url = release.get("html_url")
         if not str(release_url).startswith(release_prefix):
             release_url = None
-        download_url = next(
-            (
-                asset.get("browser_download_url")
-                for asset in assets
-                if str(asset.get("name", "")).endswith("-windows-x64.zip")
-                and str(asset.get("browser_download_url", "")).startswith(
-                    f"{release_prefix}download/"
-                )
-            ),
-            None,
-        )
+        download_url = None
+        checksum = None
+        expected_name = f"Plugin-Online-{latest_version}-windows-x64-setup.exe"
+        for asset in assets:
+            if not isinstance(asset, dict) or asset.get("name") != expected_name:
+                continue
+            candidate = str(asset.get("browser_download_url") or "")
+            digest = str(asset.get("digest") or "")
+            expected_url = f"{release_prefix}download/{release.get('tag_name')}/{expected_name}"
+            if candidate == expected_url and re.fullmatch(r"sha256:[a-fA-F0-9]{64}", digest):
+                download_url = candidate
+                checksum = digest.lower()
+                break
+
         return {
             "currentVersion": self.current_version,
             "latestVersion": latest_version or None,
@@ -95,4 +98,5 @@ class GitHubReleaseChecker:
             ),
             "releaseUrl": release_url,
             "downloadUrl": download_url,
+            "sha256": checksum,
         }
