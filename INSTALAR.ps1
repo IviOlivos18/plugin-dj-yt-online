@@ -2,7 +2,10 @@ $ErrorActionPreference = 'Stop'
 $source = $PSScriptRoot
 $target = Join-Path $env:LOCALAPPDATA 'YouTube Plugin Online'
 if (Get-Process -Name virtualdj -ErrorAction SilentlyContinue) { throw 'Cierra VirtualDJ antes de instalar o actualizar.' }
-if (Get-NetTCPConnection -LocalPort 8766 -State Listen -ErrorAction SilentlyContinue) { throw 'Cierra el servicio que esta usando el puerto 8766 antes de instalar o actualizar.' }
+& (Join-Path $source 'scripts\stop-previous-service.ps1') -Port 8766
+$installedTray = Join-Path $target 'Plugin Online Bandeja.exe'
+Get-Process -Name 'Plugin Online Bandeja' -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $installedTray } | Stop-Process
+
 
 Write-Host 'Instalando YouTube Plugin Online para el usuario actual...'
 New-Item -ItemType Directory -Force -Path $target | Out-Null

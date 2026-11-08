@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -68,12 +69,19 @@ internal static class Installer {
    info.UseShellExecute=false; info.CreateNoWindow=true; info.WorkingDirectory=temp;
    info.RedirectStandardOutput=true; info.RedirectStandardError=true;
    string log=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"PluginOnline-instalacion.log");
+   var capturedError=new StringBuilder();
    using(var process=new Process()) using(var writer=File.CreateText(log)) {
     process.StartInfo=info;
     process.OutputDataReceived += (s,e) => { if(e.Data!=null) lock(writer) { writer.WriteLine(e.Data); } };
-    process.ErrorDataReceived += (s,e) => { if(e.Data!=null) lock(writer) { writer.WriteLine(e.Data); } };
+    process.ErrorDataReceived += (s,e) => { if(e.Data!=null) lock(writer) { writer.WriteLine(e.Data); capturedError.AppendLine(e.Data); } };
     process.Start(); process.BeginOutputReadLine(); process.BeginErrorReadLine(); process.WaitForExit();
-    if(process.ExitCode!=0) throw new InvalidOperationException("Revisa la conexión y asegúrate de que el servicio anterior esté cerrado.");
+    if(process.ExitCode!=0) {
+     string errors=capturedError.ToString();
+     if(errors.Contains("puerto pertenece") || errors.Contains("detener el servicio anterior"))
+      throw new InvalidOperationException("No se pudo detener el servicio anterior. No se ha detenido ninguna otra aplicación.");
+     if(errors.Contains("VirtualDJ")) throw new InvalidOperationException("Cierra VirtualDJ y vuelve a intentarlo.");
+     throw new InvalidOperationException("Comprueba tu conexión y vuelve a intentarlo. Se guardaron los detalles para diagnóstico.");
+    }
    }
   } finally { try { Directory.Delete(temp,true); } catch {} }
  }
