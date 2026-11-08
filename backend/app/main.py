@@ -21,6 +21,7 @@ from .stream.proxy import proxy_youtube_stream
 from .stream.naming import stream_url
 from .stream.resolver import YtDlpResolver
 from .update_checker import GitHubReleaseChecker
+from .update_download import download_verified
 
 settings = get_settings()
 settings.prepare_directories()
@@ -53,11 +54,33 @@ def _error_message(exc: Exception) -> str:
     return message or type(exc).__name__
 
 
+async def _prepare_updates_in_background():
+    while True:
+        try:
+            result = await update_checker.check()
+            if result.get("updateAvailable") and result.get("downloadUrl") and result.get("sha256"):
+                await download_verified(result["downloadUrl"], result["sha256"], settings.github_repository, settings.data_dir / "updates")
+                logger.info("Update %s downloaded and verified", result.get("latestVersion"))
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.warning("Background update check or download failed")
+        await asyncio.sleep(6 * 60 * 60)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await cache.initialize()
-    yield
-    await browser_search.close()
+    update_task = asyncio.create_task(_prepare_updates_in_background())
+    try:
+        yield
+    finally:
+        update_task.cancel()
+        try:
+            await update_task
+        except asyncio.CancelledError:
+            pass
+        await browser_search.close()
 
 
 app = FastAPI(title="VirtualDJ YouTube Companion", version=settings.version, lifespan=lifespan)
