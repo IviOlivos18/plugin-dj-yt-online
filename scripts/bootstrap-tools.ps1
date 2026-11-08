@@ -1,7 +1,9 @@
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $Root = Split-Path -Parent $PSScriptRoot
 $Tools = Join-Path $Root "tools"
 $Cache = Join-Path $Root ".cache\downloads"
+. (Join-Path $PSScriptRoot "archive-download.ps1")
 
 @(
     $Tools, $Cache, (Join-Path $Root "data\logs"),
@@ -20,7 +22,9 @@ function Download-File($Url, $Destination) {
 }
 
 $UvZip = Join-Path $Cache "uv-x86_64-pc-windows-msvc.zip"
-Download-File "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip" $UvZip
+if (-not (Test-Path (Join-Path $Tools "uv\uv.exe"))) {
+    Get-VerifiedZip "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip" $UvZip "*uv.exe"
+}
 if (-not (Test-Path (Join-Path $Tools "uv\uv.exe"))) {
     Expand-Archive -Force $UvZip (Join-Path $Tools "uv")
 }
@@ -30,8 +34,8 @@ $YtDlp = Join-Path $Tools "yt-dlp\yt-dlp.exe"
 
 
 $FfmpegZip = Join-Path $Cache "ffmpeg-release-essentials.zip"
-Download-File "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" $FfmpegZip
 if (-not (Test-Path (Join-Path $Tools "ffmpeg\bin\ffmpeg.exe"))) {
+    Get-VerifiedZip "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" $FfmpegZip "*/bin/ffmpeg.exe"
     $Extract = Join-Path $Cache "ffmpeg-extract"
     New-Item -ItemType Directory -Force $Extract | Out-Null
     Expand-Archive -Force $FfmpegZip $Extract
