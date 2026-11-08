@@ -25,7 +25,7 @@ try {
   $exe = Join-Path $dist ("Plugin-Online-$version-windows-x64-setup.exe")
   $compiler = Join-Path $env:SystemRoot 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
   if (-not (Test-Path -LiteralPath $compiler)) { throw 'No se encontro el compilador de .NET Framework.' }
-  & $compiler /nologo /target:exe /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll "/resource:$zip,payload.zip" "/out:$exe" (Join-Path $root 'packaging\Installer.cs')
+  & $compiler /nologo /target:winexe /reference:System.IO.Compression.dll /reference:System.IO.Compression.FileSystem.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "/resource:$zip,payload.zip" "/out:$exe" (Join-Path $root 'packaging\Installer.cs')
   if ($LASTEXITCODE -ne 0) { throw 'No se pudo compilar el instalador.' }
   & $exe --verify-only
   if ($LASTEXITCODE -ne 0) { throw 'El paquete no supero la verificacion.' }

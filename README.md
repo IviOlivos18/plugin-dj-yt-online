@@ -25,3 +25,9 @@ Cada versión debe usar el mismo número en `VERSION` y `pyproject.toml`. Genera
 Al abrir VirtualDJ, el icono de la bandeja solicita una comprobación de la última versión publicada en GitHub. No se hacen comprobaciones periódicas mientras VirtualDJ siga abierto. Si la versión es más reciente y tiene un instalador con el nombre y el SHA-256 esperados, se descarga y verifica en `data/updates`. Esta fase no ejecuta el instalador ni cambia la instalación. Requiere un repositorio y una versión públicos o un mecanismo de acceso autorizado, que no se incluye. No guarda credenciales.
 
 La huella que devuelve GitHub verifica integridad frente a los metadatos de la versión; no sustituye la firma del ejecutable ni una atestación de procedencia. El icono permite abrir la carpeta donde se ha guardado una actualización verificada. La instalación automática, la ventana de confirmación y la integración con Komi Store aún no están implementadas.
+
+## Instalador con interfaz sencilla
+
+Abre el ejecutable y pulsa Instalar. La ventana muestra un mensaje de progreso mientras prepara las dependencias y el servicio. Una vez terminado, instala el plugin para el usuario actual y arranca el icono de la bandeja. El instalador requiere internet, VirtualDJ cerrado y que no haya otro servicio usando el puerto local 8766.
+
+El aviso en la bandeja puede mostrar una actualización descargada y abrir su carpeta; la instalación automática de las actualizaciones aún no está implementada. Los detalles técnicos del instalador se guardan en `%LOCALAPPDATA%/PluginOnline-instalacion.log`.

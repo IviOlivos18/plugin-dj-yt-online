@@ -1,33 +1,84 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Diagnostics;
 using System.Reflection;
-class Installer {
- static int Main(string[] args) {
-  string work = Path.Combine(Path.GetTempPath(), "YouTubePluginOnline-" + Guid.NewGuid().ToString("N"));
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+internal class SetupWindow : Form {
+ private readonly Label message = new Label();
+ private readonly Button action = new Button();
+ private readonly ProgressBar progress = new ProgressBar();
+ private bool completed;
+ public SetupWindow() {
+  Text = "Instalar Plugin Online";
+  ClientSize = new System.Drawing.Size(480, 230);
+  FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false;
+  StartPosition = FormStartPosition.CenterScreen;
+  var title = new Label(); title.Text = "Plugin Online"; title.Font = new System.Drawing.Font("Segoe UI", 17F, System.Drawing.FontStyle.Bold); title.SetBounds(25, 18, 410, 38);
+  message.Text = "Instala el plugin para usar música y video en VirtualDJ. Necesitas conexión a internet."; message.SetBounds(28, 66, 420, 55);
+  progress.SetBounds(28, 128, 420, 16); progress.Style = ProgressBarStyle.Marquee; progress.Visible = false;
+  action.Text = "Instalar"; action.SetBounds(325, 160, 120, 38); action.Click += async delegate { if (completed) { Close(); return; } await Install(); };
+  Controls.AddRange(new Control[] { title, message, progress, action });
+ }
+ private async Task Install() {
+  action.Enabled=false; progress.Visible=true;
+  message.Text="Preparando el plugin. Esto puede tardar unos minutos...";
   try {
-   Directory.CreateDirectory(work);
-   using (Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.zip"))
-   using (ZipArchive z = new ZipArchive(s, ZipArchiveMode.Read)) {
-    if (args.Length > 0 && args[0] == "--verify-only") {
-     bool hasScript = false, hasPlugin = false, hasService = false, hasVersion = false;
-     foreach (ZipArchiveEntry entry in z.Entries) {
-      string name = entry.FullName.Replace('\\', '/');
-      if (name == "INSTALAR.ps1") hasScript = true;
-      if (name == "VERSION") hasVersion = true;
-      if (name == "backend/app/main.py") hasService = true;
-      if (name == "plugin/online-source/prebuilt/x64/YouTube Plugin Online.dll") hasPlugin = true;
-     }
-     if (!hasScript || !hasPlugin || !hasService || !hasVersion) return 2;
-     Console.WriteLine("Installer package OK; entries: " + z.Entries.Count); return 0;
-    }
-    z.ExtractToDirectory(work);
+   await Task.Run(() => Installer.InstallPackage());
+   progress.Visible=false; message.Text="¡Listo! Abre VirtualDJ y busca Plugin Online en la lista de música.";
+   action.Text="Finalizar"; completed=true;
+  } catch (Exception ex) {
+   progress.Visible=false; message.Text="No se pudo completar la instalación. " + ex.Message;
+   action.Text="Reintentar";
+  } finally { action.Enabled=true; }
+ }
+}
+
+internal static class Installer {
+ private static ZipArchive OpenPackage() {
+  Stream stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.zip");
+  if(stream==null) throw new InvalidOperationException("El paquete está incompleto.");
+  return new ZipArchive(stream, ZipArchiveMode.Read);
+ }
+ private static bool VerifyPackage() {
+  using (var zip=OpenPackage()) {
+   bool script=false, plugin=false, service=false, version=false, tray=false;
+   foreach (ZipArchiveEntry entry in zip.Entries) {
+    string name=entry.FullName.Replace('\\','/');
+    if(name=="INSTALAR.ps1") script=true;
+    if(name=="VERSION") version=true;
+    if(name=="backend/app/main.py") service=true;
+    if(name=="Plugin Online Bandeja.exe") tray=true;
+    if(name=="plugin/online-source/prebuilt/x64/YouTube Plugin Online.dll") plugin=true;
    }
-   string script=Path.Combine(work,"INSTALAR.bat");
-   var p=Process.Start(new ProcessStartInfo("cmd.exe", "/c \"\""+script+"\"\"") {UseShellExecute=false, WorkingDirectory=work});
-   p.WaitForExit(); return p.ExitCode;
-  } catch (Exception ex) { Console.Error.WriteLine("No se pudo iniciar el instalador: " + ex.Message); Console.ReadLine(); return 1; }
-  finally { try {Directory.Delete(work,true);} catch {} }
+   return script && plugin && service && version && tray;
+  }
+ }
+ public static void InstallPackage() {
+  if (Process.GetProcessesByName("virtualdj").Length != 0) throw new InvalidOperationException("Cierra VirtualDJ e inténtalo nuevamente.");
+  string temp=Path.Combine(Path.GetTempPath(),"PluginOnline-"+Guid.NewGuid().ToString("N"));
+  Directory.CreateDirectory(temp);
+  try {
+   using(var zip=OpenPackage()) zip.ExtractToDirectory(temp);
+   string script=Path.Combine(temp,"INSTALAR.ps1");
+   string shell=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"WindowsPowerShell\v1.0\powershell.exe");
+   var info=new ProcessStartInfo(shell, "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \""+script+"\"");
+   info.UseShellExecute=false; info.CreateNoWindow=true; info.WorkingDirectory=temp;
+   info.RedirectStandardOutput=true; info.RedirectStandardError=true;
+   string log=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"PluginOnline-instalacion.log");
+   using(var process=new Process()) using(var writer=File.CreateText(log)) {
+    process.StartInfo=info;
+    process.OutputDataReceived += (s,e) => { if(e.Data!=null) lock(writer) { writer.WriteLine(e.Data); } };
+    process.ErrorDataReceived += (s,e) => { if(e.Data!=null) lock(writer) { writer.WriteLine(e.Data); } };
+    process.Start(); process.BeginOutputReadLine(); process.BeginErrorReadLine(); process.WaitForExit();
+    if(process.ExitCode!=0) throw new InvalidOperationException("Revisa la conexión y asegúrate de que el servicio anterior esté cerrado.");
+   }
+  } finally { try { Directory.Delete(temp,true); } catch {} }
+ }
+ [STAThread] private static int Main(string[] args) {
+  if(args.Length>0 && args[0]=="--verify-only") return VerifyPackage()?0:2;
+  Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false); Application.Run(new SetupWindow()); return 0;
  }
 }

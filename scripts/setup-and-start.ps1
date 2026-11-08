@@ -84,5 +84,5 @@ if ($SetupOnly) {
     Write-Step "Setup complete"
 } else {
     Write-Step "Starting backend"
-    & (Join-Path $PSScriptRoot "start-backend.ps1") -Port 8766
+    & (Join-Path $PSScriptRoot "start-backend.ps1") -Port 8766 -NoBrowser
 }

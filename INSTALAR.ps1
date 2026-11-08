@@ -30,6 +30,10 @@ $serviceLink.Arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass
 $serviceLink.WorkingDirectory = $target
 $serviceLink.Description = 'Iniciar el servicio local del plugin'
 $serviceLink.Save()
+$trayExe = Join-Path $target 'Plugin Online Bandeja.exe'
+if (-not (Get-Process -Name 'Plugin Online Bandeja' -ErrorAction SilentlyContinue)) {
+    Start-Process -FilePath $trayExe -WorkingDirectory $target -WindowStyle Hidden
+}
 Write-Host ''
 Write-Host 'Instalacion completada. Reinicia VirtualDJ y busca YouTube Plugin Online en Online Music.' -ForegroundColor Green
 Write-Host 'El servicio guarda videos descargados en su cache; no se borran automaticamente.'
