@@ -56,8 +56,26 @@ async def test_background_checker_downloads_only_new_verified_release(monkeypatc
     monkeypatch.setattr(main, "download_verified", fake_download)
     monkeypatch.setattr(main.settings, "github_repository", "owner/repo")
     monkeypatch.setattr(main.settings, "data_dir", tmp_path)
-    task = asyncio.create_task(main._prepare_updates_in_background())
+    task = asyncio.create_task(main._prepare_update_once())
     await asyncio.wait_for(called.wait(), timeout=2)
-    task.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await task
+    await asyncio.wait_for(task, timeout=2)
+    assert main.update_state["status"] == "ready"
+
+
+def test_browser_origins_cannot_trigger_update():
+    from fastapi.testclient import TestClient
+    from backend.app.main import app
+    with TestClient(app) as client:
+        response = client.post("/api/update/virtualdj-open", headers={"Origin": "https://example.com"})
+    assert response.status_code == 403
+
+
+def test_lifespan_does_not_check_without_virtualdj(monkeypatch):
+    from fastapi.testclient import TestClient
+    import importlib
+    main = importlib.import_module("backend.app.main")
+    async def unexpected():
+        raise AssertionError("Update should not be checked at service startup")
+    monkeypatch.setattr(main, "_prepare_update_once", unexpected)
+    with TestClient(main.app) as client:
+        assert client.get("/api/update/state").status_code == 200

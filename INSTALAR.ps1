@@ -17,6 +17,19 @@ $link.TargetPath = Join-Path $target 'INICIAR.bat'
 $link.WorkingDirectory = $target
 $link.Description = 'Iniciar el servicio local de YouTube Plugin Online'
 $link.Save()
+$startup = [Environment]::GetFolderPath('Startup')
+$trayLink = $shell.CreateShortcut((Join-Path $startup 'Plugin Online Bandeja.lnk'))
+$trayLink.TargetPath = Join-Path $target 'Plugin Online Bandeja.exe'
+$trayLink.WorkingDirectory = $target
+$trayLink.Description = 'Avisos de actualizaciones al abrir VirtualDJ'
+$trayLink.Save()
+$serviceLink = $shell.CreateShortcut((Join-Path $startup 'Plugin Online Servicio.lnk'))
+$serviceLink.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+$serviceScript = Join-Path $target 'scripts\start-backend.ps1'
+$serviceLink.Arguments = '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $serviceScript + '" -Port 8766 -NoBrowser'
+$serviceLink.WorkingDirectory = $target
+$serviceLink.Description = 'Iniciar el servicio local del plugin'
+$serviceLink.Save()
 Write-Host ''
 Write-Host 'Instalacion completada. Reinicia VirtualDJ y busca YouTube Plugin Online en Online Music.' -ForegroundColor Green
 Write-Host 'El servicio guarda videos descargados en su cache; no se borran automaticamente.'

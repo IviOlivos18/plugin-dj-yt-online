@@ -54,32 +54,45 @@ def _error_message(exc: Exception) -> str:
     return message or type(exc).__name__
 
 
-async def _prepare_updates_in_background():
-    while True:
-        try:
-            result = await update_checker.check()
-            if result.get("updateAvailable") and result.get("downloadUrl") and result.get("sha256"):
-                await download_verified(result["downloadUrl"], result["sha256"], settings.github_repository, settings.data_dir / "updates")
-                logger.info("Update %s downloaded and verified", result.get("latestVersion"))
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            logger.warning("Background update check or download failed")
-        await asyncio.sleep(6 * 60 * 60)
+update_state = {"status": "idle", "version": None, "message": None}
+update_task = None
+
+
+async def _prepare_update_once():
+    update_state.update(status="checking", version=None, message=None)
+    try:
+        update_checker._cached_at = 0
+        result = await update_checker.check()
+        if result.get("error"):
+            update_state.update(status="unavailable", message="No se pudieron consultar las versiones.")
+        elif not result.get("updateAvailable"):
+            update_state.update(status="current", version=result.get("currentVersion"))
+        elif not result.get("downloadUrl") or not result.get("sha256"):
+            update_state.update(status="unavailable", version=result.get("latestVersion"), message="No hay un instalador verificable.")
+        else:
+            update_state.update(status="downloading", version=result.get("latestVersion"))
+            await download_verified(result["downloadUrl"], result["sha256"], settings.github_repository, settings.data_dir / "updates")
+            update_state.update(status="ready", version=result.get("latestVersion"))
+            logger.info("Update %s downloaded and verified", result.get("latestVersion"))
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        update_state.update(status="unavailable", message="No se pudo preparar la actualización.")
+        logger.warning("Background update check or download failed")
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await cache.initialize()
-    update_task = asyncio.create_task(_prepare_updates_in_background())
     try:
         yield
     finally:
-        update_task.cancel()
-        try:
-            await update_task
-        except asyncio.CancelledError:
-            pass
+        if update_task and not update_task.done():
+            update_task.cancel()
+            try:
+                await update_task
+            except asyncio.CancelledError:
+                pass
         await browser_search.close()
 
 
@@ -259,24 +272,14 @@ async def status_page() -> HTMLResponse:
       const el = document.getElementById("uptime");
       el.textContent = String(Number(el.textContent) + 1);
     }}, 1000);
-    fetch("/api/update")
+    fetch("/api/update/state")
       .then(response => response.json())
       .then(update => {{
-        latestVersion.textContent = update.latestVersion || "Unavailable";
-        if (update.updateAvailable && update.releaseUrl) {{
-          availableUpdate = update;
-          if (getSkippedUpdate() === update.latestVersion) showSkippedUpdate(update);
-          else showAvailableUpdate(update);
-        }} else if (update.error) {{
-          updateStatus.textContent = "Actualizaciones no disponibles. El repositorio privado requiere acceso autorizado.";
-        }} else {{
-          updateStatus.textContent = "No se encontraron actualizaciones.";
-        }}
+        latestVersion.textContent = update.version || "No consultada";
+        const messages = {{idle: "Se comprobará al abrir VirtualDJ.", checking: "Buscando actualización...", downloading: "Descargando actualización...", ready: "Actualización descargada. Consulta el icono de la bandeja.", current: "No hay actualización disponible.", unavailable: "No se pudo consultar la actualización."}};
+        updateStatus.textContent = messages[update.status] || "Estado desconocido.";
       }})
-      .catch(() => {{
-        latestVersion.textContent = "Unavailable";
-        updateStatus.textContent = "Actualizaciones no disponibles. El repositorio privado requiere acceso autorizado.";
-      }});
+      .catch(() => {{ updateStatus.textContent = "No se pudo leer el estado."; }});
     skipUpdate.addEventListener("click", () => {{
       if (!availableUpdate) return;
       setSkippedUpdate(availableUpdate.latestVersion);
@@ -325,6 +328,23 @@ async def logo() -> FileResponse:
 @app.get("/api/health")
 async def health() -> dict:
     return _health_payload()
+
+
+@app.post("/api/update/virtualdj-open", include_in_schema=False)
+async def update_virtualdj_open(request: Request) -> dict:
+    global update_task
+    if not _is_loopback(request) or request.headers.get("origin"):
+        raise HTTPException(403, "Only a local application can start update checks")
+    if update_task is None or update_task.done():
+        update_task = asyncio.create_task(_prepare_update_once())
+    return {"accepted": True}
+
+
+@app.get("/api/update/state", include_in_schema=False)
+async def update_state_endpoint(request: Request) -> dict:
+    if not _is_loopback(request):
+        raise HTTPException(403, "Local access only")
+    return dict(update_state)
 
 
 @app.get("/api/update", include_in_schema=False)

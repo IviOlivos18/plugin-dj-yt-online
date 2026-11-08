@@ -42,7 +42,7 @@ def test_status_page() -> None:
     assert 'id="update-panel"' in response.text
     assert 'updatePanel.classList.add("available")' in response.text
     assert 'localStorage.setItem(skippedUpdateKey, version)' in response.text
-    assert 'getSkippedUpdate() === update.latestVersion' in response.text
+    assert 'fetch("/api/update/state")' in response.text
     assert 'latestVersion.addEventListener("click", restoreUpdate)' in response.text
     assert "Online Source backend status" not in response.text
     assert "https://github.com/rcsy-px" in response.text

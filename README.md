@@ -22,6 +22,6 @@ Cada versión debe usar el mismo número en `VERSION` y `pyproject.toml`. Genera
 
 ## Comprobación en segundo plano
 
-Al iniciar el servicio se consulta la última versión publicada de GitHub, y después se repite la consulta cada seis horas mientras el servicio siga activo. Si la versión es más reciente y tiene un instalador con el nombre y el SHA-256 esperados, se descarga y verifica en `data/updates`. Esta fase no ejecuta el instalador ni cambia la instalación. Requiere un repositorio y una versión públicos o un mecanismo de acceso autorizado, que no se incluye. No guarda credenciales.
+Al abrir VirtualDJ, el icono de la bandeja solicita una comprobación de la última versión publicada en GitHub. No se hacen comprobaciones periódicas mientras VirtualDJ siga abierto. Si la versión es más reciente y tiene un instalador con el nombre y el SHA-256 esperados, se descarga y verifica en `data/updates`. Esta fase no ejecuta el instalador ni cambia la instalación. Requiere un repositorio y una versión públicos o un mecanismo de acceso autorizado, que no se incluye. No guarda credenciales.
 
-La huella que devuelve GitHub verifica integridad frente a los metadatos de la versión; no sustituye la firma del ejecutable ni una atestación de procedencia. La instalación automática, la ventana de confirmación y la integración con Komi Store aún no están implementadas.
+La huella que devuelve GitHub verifica integridad frente a los metadatos de la versión; no sustituye la firma del ejecutable ni una atestación de procedencia. El icono permite abrir la carpeta donde se ha guardado una actualización verificada. La instalación automática, la ventana de confirmación y la integración con Komi Store aún no están implementadas.

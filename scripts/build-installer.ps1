@@ -13,6 +13,9 @@ try {
   $dllDest = Join-Path $stage 'plugin\online-source\prebuilt\x64'
   New-Item -ItemType Directory -Force -Path $dllDest | Out-Null
   Copy-Item -LiteralPath (Join-Path $root 'plugin\online-source\prebuilt\x64\YouTube Plugin Online.dll') -Destination $dllDest
+  $trayCompiler = Join-Path $env:SystemRoot 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+  & $trayCompiler /nologo /target:winexe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll "/out:$stage\Plugin Online Bandeja.exe" (Join-Path $root 'packaging\TrayApp.cs')
+  if ($LASTEXITCODE -ne 0) { throw 'No se pudo compilar el icono de la bandeja.' }
   foreach ($name in @('INSTALAR.ps1','INSTALAR.bat','INICIAR.bat','README.md','LICENSE','THIRD_PARTY_NOTICES.md','VERSION','pyproject.toml','uv.lock')) {
     Copy-Item -LiteralPath (Join-Path $root $name) -Destination $stage
   }
