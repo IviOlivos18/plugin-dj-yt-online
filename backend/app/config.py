@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     resolve_cache_ttl_seconds: int = 1200
     update_check_cache_ttl_seconds: int = 21600
     update_check_timeout_seconds: float = 5.0
-    github_repository: str = "IviOlivos18/youtube-plugin-online"
+    github_repository: str = "IviOlivos18/plugin-dj-yt-online"
     headless: bool = True
 
     data_dir: Path = PROJECT_ROOT / "data"
