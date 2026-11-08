@@ -83,6 +83,9 @@ internal static class Installer {
      throw new InvalidOperationException("Comprueba tu conexión y vuelve a intentarlo. Se guardaron los detalles para diagnóstico.");
     }
    }
+   string tray=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "YouTube Plugin Online", "Plugin Online Bandeja.exe");
+   if (!File.Exists(tray)) throw new InvalidOperationException("No se encontró el icono de notificaciones.");
+   Process.Start(new ProcessStartInfo(tray) { WorkingDirectory=Path.GetDirectoryName(tray), WindowStyle=ProcessWindowStyle.Hidden, UseShellExecute=true });
   } finally { try { Directory.Delete(temp,true); } catch {} }
  }
  [STAThread] private static int Main(string[] args) {
